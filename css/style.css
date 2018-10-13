@@ -29,6 +29,7 @@ Main Components
 
 -------------------------------- */
 .cd-schedule {
+  display: none;
   position: relative;
   margin: 2em 0;
 }
@@ -165,7 +166,7 @@ Main Components
     width: 100%;
   }
   .cd-schedule .events .events-group {
-    width: 14.2857142857%;
+    width: 20%;
     float: left;
     border: 1px solid #EAEAEA;
     /* reset style */

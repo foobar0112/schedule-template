@@ -1,5 +1,19 @@
 jQuery(document).ready(function($){
 
+	$("form").submit(function (e) {
+    e.preventDefault();
+    	renderTimetable($('#rawtext').val());
+    	$('.cd-schedule').css({
+    		display: 'inherit'
+    	})
+    	$('.input-form').css({
+    		display: 'none'
+    	})
+	});
+	
+})
+
+function renderTimetable(rawtext) {
 	Date.prototype.addHours = function(h){
 	    this.setHours(this.getHours() + Math.floor(h))
 	    this.setMinutes(this.getMinutes() + 60 * (h % 1))
@@ -13,25 +27,23 @@ jQuery(document).ready(function($){
 	
 	//should add a loding while the events are organized 
 	
-	const TIMELINE_START = new Date(0, 0, 0, 7, 0, 0, 0)
-	const TIMELINE_END = new Date(0, 0, 0, 20, 0, 0, 0)
 	const TIMELINE_INTERVALL = 0.25  // in hours
-	const TIMELINE_NUM = (TIMELINE_END.getHours() - TIMELINE_START.getHours()) / TIMELINE_INTERVALL + 1
 	const DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday', 'Sunday']
-	const DAYS_NUM = 7;
+	const DAYS_SHORT = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So']
+	const DAYS_NUM = 5;
 
 	function SchedulePlan( element ) {
 		this.element = element
 		this.timeline = this.element.find('.timeline')
 		this.timelineList = this.timeline.find('ul')
 
-		// neede?
-		//this.timelineItemsNumber = this.TIMELINE_NUM
+
+		var data = this.preprocessData(rawtext)
 
 		// add times according to START, END, INTERVALL
-		for(var i = 0; i < TIMELINE_NUM; i++) {
-			this.timelineList.append(`<li><span>${TIMELINE_START.getHours()}:${TIMELINE_START.getMinutes() < 10 ? '0' : ''}${TIMELINE_START.getMinutes()}</span></li>`)
-			TIMELINE_START.addHours(TIMELINE_INTERVALL)
+		for(var i = 0; i < this.TIMELINE_NUM; i++) {
+			this.timelineList.append(`<li><span>${this.TIMELINE_START.getHours()}:${this.TIMELINE_START.getMinutes() < 10 ? '0' : ''}${this.TIMELINE_START.getMinutes()}</span></li>`)
+			this.TIMELINE_START.addHours(TIMELINE_INTERVALL)
 		}
 		
 		this.timelineItems = this.timeline.find('li')
@@ -42,53 +54,6 @@ jQuery(document).ready(function($){
 		this.eventsWrapper = this.element.find('.events')
 
 		var eventsWrapperList = this.eventsWrapper.find('ul')
-
-		var json = loadJson('./events.json')
-
-		// check colliding events and find corresponding events (e.g. lecture + exercise)
-		group_id = 0
-		$.each(json, function(i, event1) {
-			s1 = Number(event1.start.split(':')[0]) + Number(event1.start.split(':')[1] * (1/60))
-			e1 = Number(event1.end.split(':')[0]) + Number(event1.end.split(':')[1] * (1/60))
-			for(var j = i + 1; j < json.length; j++) {
-				event2 = json[j]
-				s2 = Number(event2.start.split(':')[0]) + Number(event2.start.split(':')[1] * (1/60))
-				e2 = Number(event2.end.split(':')[0]) + Number(event2.end.split(':')[1] * (1/60))
-				if(event1.day === event2.day) {
-					if(e1 > s2 && e1 <= e2) {
-						event1.position = 1
-						event2.position = 2
-					} else if(e2 > s1 && e2 <= e1) {
-						event1.position = 2
-						event2.position = 1
-					} else {
-						//todo
-					}
-				}
-
-				if(event1.module.split('.')[0] === event2.module.split('.')[0]) {
-					if(event1.group == null && event2.goup == null) {
-						group_id++
-						event1.group = event2.group = group_id
-					} else if(event1.group != null) {
-						event2.group = event1.group
-					} else if(event2.group != null) {
-						event1.group = event2.group
-					} else {
-						console.log("error")
-					}
-				}
-			}
-		})
-
-		$.each(json, function(i, event) {
-			if(event.group == null) {
-				group_id++
-				event.group = group_id
-			}
-		})
-		console.log(group_id)
-
 		
 		for(var day = 0; day < DAYS_NUM; day++) {
 			var group = eventsWrapperList.append(`
@@ -98,7 +63,7 @@ jQuery(document).ready(function($){
 				</li>
 			`)
 
-			$.each(json, function(i, event) {
+			$.each(data.events, function(i, event) {
 				if(event.day === day) {
 					var eventLi = group.find('ul').eq(-1).append(
 						`<li class="single-event" data-start="${event.start}" data-end="${event.end}" data-event="event-${event.group}">
@@ -130,7 +95,7 @@ jQuery(document).ready(function($){
 		
 		// add lines according to length of schedule
 		this.eventsGroup.find('ul').css({
-			height: this.eventsGroup.find('ul').css('height').slice(0,-2) * TIMELINE_NUM + 'px'
+			height: this.eventsGroup.find('ul').css('height').slice(0,-2) * this.TIMELINE_NUM + 'px'
 		})
 
 		this.singleEvents = this.eventsGroup.find('.single-event')
@@ -147,6 +112,82 @@ jQuery(document).ready(function($){
 		this.animating = false
 
 		this.initSchedule()
+	}
+
+	SchedulePlan.prototype.preprocessData = function(text) {
+		//regex of hell:
+		var re = /^(.*)\s\-\s(.*)\s\n(.*)\s\-\s(.*)\s\((\w{2})\s(\d{2}:\d{2})\s\-\s(\d{2}:\d{2})\)/gmy
+		var matches = text.split(re)
+		var data = {"events": []}
+	    for(var i = 0; i < matches.length - matches.length % 8; i+=8) {
+	    	var e = {}
+	    	e.type =  matches[i+1].split(" ", 1)[0]
+	    	e.title = matches[i+1].slice((e['type'].length + 1))
+	    	e.module = matches[i+2]
+	    	e.subtitle = matches[i+3]
+	    	e.module_group = matches[i+4]
+	    	e.day = DAYS_SHORT.indexOf(matches[i+5])
+	    	e.start = matches[i+6]
+	    	e.end = matches[i+7]
+	    	data['events'].push(JSON.parse(JSON.stringify(e)))
+	    }
+		
+		// check colliding events
+		// find corresponding events (e.g. lecture + exercise)
+		group_id = 0
+		for(var i = 0; i < data.events.length; i++) {
+			event1 = data.events[i]
+			s1 = Number(event1.start.split(':')[0]) + Number(event1.start.split(':')[1] * (1/60))
+			e1 = Number(event1.end.split(':')[0]) + Number(event1.end.split(':')[1] * (1/60))
+			for(var j = i + 1; j < data.events.length; j++) {
+				event2 = data.events[j]
+				s2 = Number(event2.start.split(':')[0]) + Number(event2.start.split(':')[1] * (1/60))
+				e2 = Number(event2.end.split(':')[0]) + Number(event2.end.split(':')[1] * (1/60))
+				if(event1.day === event2.day) {
+					if(e1 > s2 && e1 <= e2) {
+						event1.position = 1
+						event2.position = 2
+					} else if(e2 > s1 && e2 <= e1) {
+						event1.position = 2
+						event2.position = 1
+					} else {
+						//todo
+					}
+				}
+				if(event1.module.split('.')[0] === event2.module.split('.')[0]) {
+					if(event1.group == null && event2.goup == null) {
+						group_id++
+						event1.group = event2.group = group_id
+					} else if(event1.group != null) {
+						event2.group = event1.group
+					} else if(event2.group != null) {
+						event1.group = event2.group
+					} else {
+						console.log("error")
+					}
+				}
+			}
+		}
+
+		// asign groups to single events
+		// find time range
+		var minH = 25
+		var maxH = 0
+		for(var i = 0; i < data.events.length; i++) {
+			event = data.events[i]
+			if(event.group == null) {
+				group_id++
+				event.group = group_id
+			}
+			minH = Math.min(minH, Number(event.start.split(':')[0]))
+			maxH = Math.max(maxH, Number(event.end.split(':')[0]))
+		}
+
+		this.TIMELINE_START = new Date(0, 0, 0, minH - 1, 0, 0, 0)
+		this.TIMELINE_END = new Date(0, 0, 0, maxH + 1, 0, 0, 0)
+		this.TIMELINE_NUM = (this.TIMELINE_END.getHours() - this.TIMELINE_START.getHours()) / TIMELINE_INTERVALL + 1
+
+	    return data
 	}
 
 	SchedulePlan.prototype.initSchedule = function() {
@@ -494,19 +535,4 @@ jQuery(document).ready(function($){
 			'transform': value
 		})
 	}
-
-	function loadJson(file) {
-		var json = ""
-	    var rawFile = new XMLHttpRequest();
-	    rawFile.open("GET", file, false);
-	    rawFile.onreadystatechange = function () {
-	        if(rawFile.readyState === 4) {
-	            if(rawFile.status === 200 || rawFile.status == 0) {
-	                json = JSON.parse(rawFile.responseText);
-	            }
-	        }
-	    }
-	    rawFile.send(null);
-	    return json
-	}
-});
+}
