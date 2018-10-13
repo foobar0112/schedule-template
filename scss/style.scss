@@ -226,7 +226,7 @@ Main Components
 		.events-group > ul {
 			@include clearfix;
 			// 19 is the number of list items in the .timeline
-			height: $row-height*19;
+			height: $row-height; //computed by js
 			/* reset style */
 			display: block;
 			overflow: visible;
@@ -242,7 +242,7 @@ Main Components
 			position: absolute;
 			z-index: 3;
 			/* top position and height will be set using js */
-			width: calc(100% + 2px);
+			width: 100%;
 			left: -1px;
 			box-shadow: 0 10px 20px rgba(#000, .1), inset 0 -3px 0 rgba(#000, .2);
 			/* reset style */
@@ -289,16 +289,16 @@ Main Components
 }
 
 .cd-schedule .event-name {
-	font-size: 2.4rem;
+	font-size: 2rem;
 
 	@include MQ(M) {
-		font-size: 2rem;
+		font-size: 1.5rem;
 	}
 }
 
 .cd-schedule .event-date {
 	/* they are not included in the the HTML but added using JavScript */
-	font-size: 1.4rem;
+	font-size: 1.5rem;
 	opacity: .7;
 	line-height: 1.2;
 	margin-bottom: .2em;
@@ -339,6 +339,15 @@ Main Components
 
 .cd-schedule .single-event[data-event="event-4"]:hover {
 	background: lighten($event-color-4, 5%);
+}
+
+.cd-schedule .single-event[data-event="event-5"],
+.cd-schedule [data-event="event-5"] .header-bg {
+	background: $event-color-5;
+}
+
+.cd-schedule .single-event[data-event="event-5"]:hover {
+	background: lighten($event-color-5, 5%);
 }
 
 .cd-schedule .event-modal {

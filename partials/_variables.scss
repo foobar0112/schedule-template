@@ -1,14 +1,15 @@
 // colors
 
-$event-color-1: #577F92; // Smalt Blue
-$event-color-2: #443453; // Martinique
-$event-color-3: #A2B9B2; // Edward
-$event-color-4: #f6b067; // Rajah
+$event-color-1: #b8336a;
+$event-color-2: #726da8;
+$event-color-3: #7d8cc4;
+$event-color-4: #a0d2db;
+$event-color-5: #c490d1;
 
 $text-color: #222222;
 $border-color: #EAEAEA;
 $bg-color: white;
-$link-color: $event-color-3;
+$link-color: white;
 
 // fonts 
 
@@ -16,5 +17,5 @@ $primary-font: 'Source Sans Pro', sans-serif;
 
 //colum number
 
-$columns-number: 5;
-$row-height: 50px;
+$columns-number: 7;
+$row-height: 25px;
