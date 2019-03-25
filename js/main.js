@@ -116,7 +116,7 @@ function renderTimetable(rawtext) {
 
 	SchedulePlan.prototype.preprocessData = function(text) {
 		//regex of hell:
-		var re = /^(.*)\s\-\s(.*)\s\n(.*)\s\-\s(.*)\s\((\w{2})\s(\d{2}:\d{2})\s\-\s(\d{2}:\d{2})\)/gmy
+		var re = /^(.*)\s\-\s(.*)\s*\n(.*)\s\-\s(.*)\s\((\w{2})\s(\d{2}:\d{2})\s\-\s(\d{2}:\d{2})\)/gmy
 		var matches = text.split(re)
 		var data = {"events": []}
 	    for(var i = 0; i < matches.length - matches.length % 8; i+=8) {
